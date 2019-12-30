@@ -1,0 +1,25 @@
+{
+  "name": "@tarp/httpd",
+  "version": "0.0.1",
+  "description": "A lightweight & simple HTTP daemon.",
+  "main": "Server.js",
+  "directories": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/letorbi/tarp.httpd.git"
+  },
+  "keywords": [
+    "http",
+    "daemon",
+    "webserver"
+  ],
+  "author": "Torben Haase (https://pixelsvsbytes.com)",
+  "license": "LGPL-3.0",
+  "bugs": {
+    "url": "https://github.com/letorbi/tarp.httpd/issues"
+  },
+  "homepage": "https://github.com/letorbi/tarp.httpd#readme"
+}
