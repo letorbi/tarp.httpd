@@ -3,11 +3,11 @@
 var events = require("events");
 var HttpError = require("./HttpError");
 
-module.exports = exports = function(server, request, response) {
+module.exports = exports = function(config, request, response) {
     events.EventEmitter.call(this);
     this.$requestJson = undefined;
     this.$type = undefined;
-    this.server = server;
+    this.config = config;
     this.request = request;
     this.response = response;
     this.requestText = '';
@@ -33,14 +33,14 @@ exports.prototype.run = function() {
 
 exports.prototype.delegate = function() {
     var hook;
-    hook = this.server.hooks[this.request.url] ? this.request.url : "*";
+    hook = this.config.hooks[this.request.url] ? this.request.url : "*";
     Promise.resolve().then(
       () => {
-        if (!this.server.hooks[hook])
+        if (!this.config.hooks[hook])
             throw new HttpError(404, "hook not found");
-        if (typeof this.server.hooks[hook][this.request.method] !== "function")
+        if (typeof this.config.hooks[hook][this.request.method] !== "function")
             throw new HttpError(501, "missing method");
-        return this.server.hooks[hook][this.request.method](this);
+        return this.config.hooks[hook][this.request.method](this);
       }
     ).then(
       (data) => {
