@@ -58,6 +58,8 @@ exports.prototype.delegate = function() {
       (error) => {
         if (error instanceof HttpError) {
           console.warn("ABORT "+error.toString());
+          if (error.exception)
+              console.log(error.exception);
           this.end(error.code, "");
         }
         else {
@@ -86,8 +88,7 @@ Object.defineProperty(exports.prototype, "requestJson", {
                 this.$requestJson = this.requestText ? JSON.parse(this.requestText) : null;
             }
             catch (e) {
-                console.log("ERROR exception while parsing JSON request\n", e);
-                throw new HttpError(400, "invalid JSON request")
+                throw new HttpError(400, "invalid JSON request", null, e);
             }
         }
         return this.$requestJson;
