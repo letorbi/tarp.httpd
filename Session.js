@@ -82,7 +82,13 @@ exports.prototype.end = function(status, data, type) {
 Object.defineProperty(exports.prototype, "requestJson", {
     get: function() {
         if (this.$requestJson === undefined)
-            this.$requestJson = this.requestText ? JSON.parse(this.requestText) : null;
+            try {
+              this.$requestJson = this.requestText ? JSON.parse(this.requestText) : null;
+            }
+            catch (e) {
+              console.log("ERROR exception while parsing JSON request\n", e);
+              throw new HttpError(400, "invalid JSON request")
+            }
         return this.$requestJson;
     }
 });
