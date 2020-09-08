@@ -45,13 +45,13 @@ exports.prototype.delegate = function() {
     ).then(
       (data) => {
         if (typeof data === "string") {
-          this.end(200, data);
+            this.end(200, data);
         }
         else if (data !== undefined) {
-          this.end(200, JSON.stringify(data), "application/json;charset=UTF-8");
+            this.end(200, JSON.stringify(data), "application/json;charset=UTF-8");
         }
         else {
-          this.end(200, "");
+            this.end(200, "");
         }
       }
     ).catch(
@@ -72,7 +72,7 @@ exports.prototype.delegate = function() {
 
 exports.prototype.end = function(status, data, type) {
     if (type) { 
-      this.response.setHeader("Content-Type", type);
+        this.response.setHeader("Content-Type", type);
     }
     this.response.statusCode = status;
     this.response.write(data, "utf8");
@@ -81,14 +81,15 @@ exports.prototype.end = function(status, data, type) {
 
 Object.defineProperty(exports.prototype, "requestJson", {
     get: function() {
-        if (this.$requestJson === undefined)
+        if (this.$requestJson === undefined) {
             try {
-              this.$requestJson = this.requestText ? JSON.parse(this.requestText) : null;
+                this.$requestJson = this.requestText ? JSON.parse(this.requestText) : null;
             }
             catch (e) {
-              console.log("ERROR exception while parsing JSON request\n", e);
-              throw new HttpError(400, "invalid JSON request")
+                console.log("ERROR exception while parsing JSON request\n", e);
+                throw new HttpError(400, "invalid JSON request")
             }
+        }
         return this.$requestJson;
     }
 });
