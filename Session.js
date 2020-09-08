@@ -11,6 +11,7 @@ module.exports = exports = function(server, request, response) {
     this.request = request;
     this.response = response;
     this.requestText = '';
+    this.url = new URL(request.url, "http://" + request.headers.host);
 }
 
 exports.prototype = Object.create(events.EventEmitter.prototype);
@@ -28,12 +29,11 @@ exports.prototype.run = function() {
             return this.abort(error);
         this.delegate();
     }
-
 }
 
 exports.prototype.delegate = function() {
     var hook;
-    hook = this.server.hooks[this.request.url] ? this.request.url : "*";
+    hook = this.server.hooks[this.url.pathname] ? this.url.pathname : "*";
     Promise.resolve().then(
       () => {
         if (!this.server.hooks[hook])
@@ -61,7 +61,7 @@ exports.prototype.delegate = function() {
           this.end(error.code, "");
         }
         else {
-          console.error("ERROR " + this.request.method.toLowerCase() + " " + this.request.url + " failed with:");
+          console.error("ERROR " + this.request.method.toLowerCase() + " " + this.url.pathname + " failed with:");
           console.error(error);
           this.end(500, "");
           process.exit(1);
