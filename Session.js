@@ -74,13 +74,13 @@ exports.prototype.delegate = function() {
       (error) => {
         console.error("ERROR " + this.request.method.toLowerCase() + " " + this.url.pathname + " failed with:");
         console.error(error);
-        return this.end(500, "").then(() => process.exit(1));
+        return this.end(500, "");
       }
     ).catch(
       (error) => {
         console.error("PANIC " + this.request.method.toLowerCase() + " " + this.url.pathname + " failed with:");
         console.error(error);
-        process.exit(2)
+        process.exit(1)
       }
     );
 }
