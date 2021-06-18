@@ -31,10 +31,14 @@ exports.prototype.run = function() {
     }
 }
 
+exports.prototype.start = function() {
+  // empty function that can be overwritten to execute code before any hook
+}
+
 exports.prototype.delegate = function() {
     var hook;
     hook = this.server.hooks[this.url.pathname] ? this.url.pathname : "*";
-    Promise.resolve().then(
+    this.start().then(
       () => {
         if (!this.server.hooks[hook])
             throw new HttpError(404, "hook not found");
@@ -45,13 +49,13 @@ exports.prototype.delegate = function() {
     ).then(
       (data) => {
         if (typeof data === "string") {
-            this.end(200, data);
+            return this.end(200, data);
         }
         else if (data !== undefined) {
-            this.end(200, JSON.stringify(data), "application/json;charset=UTF-8");
+            return this.end(200, JSON.stringify(data), "application/json;charset=UTF-8");
         }
         else {
-            this.end(200, "");
+            return this.end(200, "");
         }
       }
     ).catch(
@@ -60,14 +64,23 @@ exports.prototype.delegate = function() {
           console.warn("ABORT "+error.toString());
           if (error.exception)
               console.log(error.exception);
-          this.end(error.code, "");
+          return this.end(error.code, "");
         }
         else {
-          console.error("ERROR " + this.request.method.toLowerCase() + " " + this.url.pathname + " failed with:");
-          console.error(error);
-          this.end(500, "");
-          process.exit(1);
+          throw error;
         }
+      }
+    ).catch(
+      (error) => {
+        console.error("ERROR " + this.request.method.toLowerCase() + " " + this.url.pathname + " failed with:");
+        console.error(error);
+        return this.end(500, "").then(() => process.exit(1));
+      }
+    ).catch(
+      (error) => {
+        console.error("PANIC " + this.request.method.toLowerCase() + " " + this.url.pathname + " failed with:");
+        console.error(error);
+        process.exit(2)
       }
     );
 }
