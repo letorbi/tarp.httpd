@@ -31,7 +31,7 @@ exports.prototype.run = function() {
     }
 }
 
-exports.prototype.start = function() {
+exports.prototype.start = async function() {
   // empty function that can be overwritten to execute code before any hook
 }
 
@@ -85,7 +85,7 @@ exports.prototype.delegate = function() {
     );
 }
 
-exports.prototype.end = function(status, data, type) {
+exports.prototype.end = async function(status, data, type) {
     if (type) { 
         this.response.setHeader("Content-Type", type);
     }
