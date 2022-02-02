@@ -64,7 +64,7 @@ exports.prototype.delegate = function() {
           console.warn("ABORT "+error.toString());
           if (error.exception)
               console.log(error.exception);
-          return this.end(error.code, "");
+          return this.end(error.code, error.message);
         }
         else {
           throw error;
@@ -74,7 +74,7 @@ exports.prototype.delegate = function() {
       (error) => {
         console.error("ERROR " + this.request.method.toLowerCase() + " " + this.url.pathname + " failed with:");
         console.error(error);
-        return this.end(500, "");
+        return this.end(500, "Internal server error");
       }
     ).catch(
       (error) => {
