@@ -3,6 +3,9 @@
   "version": "0.0.1",
   "description": "A lightweight & simple HTTP daemon.",
   "main": "Server.js",
+  "dependencies": {
+      "mime.json": "git+https://github.com/micnic/mime.json.git"
+  },
   "directories": {},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

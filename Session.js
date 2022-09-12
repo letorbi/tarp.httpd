@@ -1,6 +1,9 @@
 "use strict";
 
 var events = require("events");
+var path = require("path");
+var mime = require("mime.json");
+
 var HttpError = require("./HttpError");
 
 module.exports = exports = function(server, request, response) {
@@ -48,8 +51,13 @@ exports.prototype.delegate = function() {
       }
     ).then(
       (data) => {
+        // TODO Mime-type detection should be part of a hook wrapper
+        if (data.constructor === Buffer) {
+            let ext = path.extname(this.url.pathname.replace(/\/$/, "/index.html")).substr(1);
+            return this.end(200, data,  mime[ext] || "application/octet-stream");
+        }
         if (typeof data === "string") {
-            return this.end(200, data);
+            return this.end(200, data, "text/plain");
         }
         else if (data !== undefined) {
             return this.end(200, JSON.stringify(data), "application/json;charset=UTF-8");
