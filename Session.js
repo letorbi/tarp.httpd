@@ -52,7 +52,7 @@ exports.prototype.delegate = function() {
     ).then(
       (data) => {
         // TODO Mime-type detection should be part of a hook wrapper
-        if (data.constructor === Buffer) {
+        if (data && data.constructor === Buffer) {
             let ext = path.extname(this.url.pathname.replace(/\/$/, "/index.html")).substr(1);
             return this.end(200, data,  mime[ext] || "application/octet-stream");
         }
@@ -63,7 +63,7 @@ exports.prototype.delegate = function() {
             return this.end(200, JSON.stringify(data), "application/json;charset=UTF-8");
         }
         else {
-            return this.end(200, "");
+            return this.end(200);
         }
       }
     ).catch(
@@ -94,11 +94,11 @@ exports.prototype.delegate = function() {
 }
 
 exports.prototype.end = async function(status, data, type) {
-    if (type) { 
-        this.response.setHeader("Content-Type", type);
-    }
     this.response.statusCode = status;
-    this.response.write(data, "utf8");
+    if (type)
+        this.response.setHeader("Content-Type", type);
+    if (data)
+        this.response.write(data, "utf8");
     this.response.end();
 }
 
