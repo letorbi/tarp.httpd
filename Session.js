@@ -50,17 +50,17 @@ exports.prototype.delegate = function() {
         return this.server.hooks[hook][this.request.method](this);
       }
     ).then(
-      (data) => {
+      (body) => {
         // TODO Mime-type detection should be part of a hook wrapper
-        if (data && data.constructor === Buffer) {
+        if (body && body.constructor === Buffer) {
             let ext = path.extname(this.url.pathname.replace(/\/$/, "/index.html")).substr(1);
-            return this.end(200, data,  mime[ext] || "application/octet-stream");
+            return this.end(200, body,  mime[ext] || "application/octet-stream");
         }
-        if (typeof data === "string") {
-            return this.end(200, data, "text/plain");
-        }
-        else if (data !== undefined) {
-            return this.end(200, JSON.stringify(data), "application/json;charset=UTF-8");
+        if (body !== undefined) {
+            return this.end(...this.server.plugins.reduce(
+                (data, plugin) => plugin.parseResponse(...data),
+                [200, body, "text/plain"]
+            ));
         }
         else {
             return this.end(200);
@@ -151,12 +151,10 @@ exports.prototype.validateJson = function(template) {
 Object.defineProperty(exports.prototype, "requestJson", {
     get: function() {
         if (this.$requestJson === undefined) {
-            try {
-                this.$requestJson = this.requestText ? JSON.parse(this.requestText) : null;
-            }
-            catch (e) {
-                throw new HttpError(400, "invalid JSON request", null, e);
-            }
+            this.$requestJson = this.server.plugins.reduce(
+                (body, plugin) => plugin.parseRequest(body),
+                this.requestText
+            )
         }
         return this.$requestJson;
     }
