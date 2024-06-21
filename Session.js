@@ -112,11 +112,11 @@ exports.prototype.validateJson = function(template) {
       if (!Object.hasOwn(obj, key)) {
         throw new HttpError(400, `Key is missing: ${chain}.${key}`);
       }
-      if (Array.isArray(tmp[key])) {
-        validateArray(obj[key], tmp[key], `${chain}.${key}`);
-      }
-      else if (typeof tmp[key] === "object") {
-        validateObject(obj[key], tmp[key], `${chain}.${key}`);
+      if (typeof tmp[key] === "object") {
+        if (Array.isArray(tmp[key]))
+          validateArray(obj[key], tmp[key], `${chain}.${key}`);
+        else
+          validateObject(obj[key], tmp[key], `${chain}.${key}`);
       }
       else if (typeof obj[key] != tmp[key]) {
         throw new HttpError(400, `Key is not of type ${tmp[key]}: ${chain}.${key}`);
@@ -129,11 +129,11 @@ exports.prototype.validateJson = function(template) {
       throw new HttpError(400, `Key is not an array: ${chain}`);
     }
     for (let idx = 0; idx < arr.length; idx++) {
-      if (Array.isArray(tmp[0])) {
-        validateArray(arr[idx], tmp[0], `${chain}.${idx}`);
-      }
-      else if (typeof tmp[0] === "object") {
-        validateObject(arr[idx], tmp[0], `${chain}.${idx}`);
+      if (typeof tmp[0] === "object") {
+        if (Array.isArray(tmp[0]))
+          validateArray(arr[idx], tmp[0], `${chain}.${idx}`);
+        else
+          validateObject(arr[idx], tmp[0], `${chain}.${idx}`);
       }
       else if (typeof arr[idx] != tmp[0]) {
         throw new HttpError(400, `Key is not of type ${tmp[0]}: ${chain}.${idx}`);
