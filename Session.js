@@ -56,15 +56,7 @@ exports.prototype.delegate = function() {
             let ext = path.extname(this.url.pathname.replace(/\/$/, "/index.html")).substr(1);
             return this.end(200, body,  mime[ext] || "application/octet-stream");
         }
-        if (body !== undefined) {
-            return this.end(...this.server.plugins.reduce(
-                (data, plugin) => plugin.parseResponse(...data),
-                [200, body, "text/plain"]
-            ));
-        }
-        else {
-            return this.end(200);
-        }
+        return this.end(200, body, "application/octet-stream");
       }
     ).catch(
       (error) => {
@@ -93,13 +85,23 @@ exports.prototype.delegate = function() {
     );
 }
 
-exports.prototype.end = async function(status, data, type) {
-    this.response.statusCode = status;
+exports.prototype.end = async function(code, body, type) {
+    [code, body, type] = await this.execPlugins("end", [code, body, type]);
+    this.response.statusCode = code;
     if (type)
         this.response.setHeader("Content-Type", type);
-    if (data)
-        this.response.write(data, "utf8");
+    if (body)
+        this.response.write(body, "utf8");
     this.response.end();
+}
+
+exports.prototype.execPlugins = async function(name, data) {
+    if (this.server.plugins[name]) {
+        for (const func of this.server.plugins[name]) {
+            data = await func(...data)
+        }
+    }
+    return data
 }
 
 exports.prototype.validateJson = function(template) {
@@ -151,8 +153,8 @@ exports.prototype.validateJson = function(template) {
 Object.defineProperty(exports.prototype, "requestJson", {
     get: function() {
         if (this.$requestJson === undefined) {
-            this.$requestJson = this.server.plugins.reduce(
-                (body, plugin) => plugin.parseRequest(body),
+            this.$requestJson = this.server.plugins.parseRequest.reduce(
+                (body, func) => func(body),
                 this.requestText
             )
         }

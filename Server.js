@@ -8,7 +8,7 @@ module.exports = exports = function(config, Session) {
     this.Session = Session || require('./Session');
     this.config = config;
     this.hooks = {};
-    this.plugins = [require("./plugins/json")];
+    this.plugins = {};
     this.httpd = null;
 
     if (this.config.workers == "cores")
@@ -20,7 +20,12 @@ exports.prototype.addHookHandler = function(hook, handler) {
 }
 
 exports.prototype.addPlugin = function(plugin) {
-    this.plugins.push()
+    for (const name in plugin) {
+        if (this.plugins[name] === undefined)
+            this.plugins[name] = [plugin[name]]
+        else
+            this.plugins[name].push(plugin[name])
+    }
 }
 
 exports.prototype.run = function() {
