@@ -21,10 +21,15 @@ exports.prototype.addRoute = function(route, handler) {
 
 exports.prototype.loadPlugin = function(plugin) {
     for (const name in plugin.hooks) {
-        if (this.hooks[name] === undefined)
-            this.hooks[name] = [plugin.hooks[name]]
-        else
-            this.hooks[name].push(plugin.hooks[name])
+        if (name === "load") {
+            plugin.hooks[name](this.config);
+        }
+        else {
+            if (this.hooks[name] === undefined)
+                this.hooks[name] = [plugin.hooks[name]]
+            else
+                this.hooks[name].push(plugin.hooks[name])
+        }
     }
 }
 
