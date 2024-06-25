@@ -38,7 +38,7 @@ exports.prototype.run = function() {
 }
 
 exports.prototype.start = async function() {
-    await this.execPlugins("start");
+    await this.execHooks("start");
 }
 
 exports.prototype.delegate = function() {
@@ -95,7 +95,7 @@ exports.prototype.delegate = function() {
 }
 
 exports.prototype.end = async function() {
-    await this.execPlugins("end");
+    await this.execHooks("end");
     this.response.statusCode = this.responseCode || 200;
     this.response.setHeader("Content-Type", this.responseType || "application/octet-stream");
     if (this.responseBody)
@@ -103,9 +103,9 @@ exports.prototype.end = async function() {
     this.response.end();
 }
 
-exports.prototype.execPlugins = async function(name) {
-    if (this.server.plugins[name]) {
-        for (const func of this.server.plugins[name]) {
+exports.prototype.execHooks = async function(name) {
+    if (this.server.hooks[name]) {
+        for (const func of this.server.hooks[name]) {
             await func(this)
         }
     }
@@ -160,7 +160,7 @@ exports.prototype.validateJson = function(template) {
 Object.defineProperty(exports.prototype, "requestBody", {
     get: function() {
         if (this.$requestBody === undefined) {
-            this.$requestBody = this.server.plugins.parseRequest.reduce(
+            this.$requestBody = this.server.hooks.parseRequest.reduce(
                 (body, func) => func(body),
                 this.requestText
             )
