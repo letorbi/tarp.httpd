@@ -114,10 +114,15 @@ exports.prototype.execHooks = async function(name) {
 Object.defineProperty(exports.prototype, "requestBody", {
     get: function() {
         if (this.$requestBody === undefined) {
-            this.$requestBody = this.server.hooks.parseRequest.reduce(
-                (body, func) => func(body),
-                this.requestText
-            )
+            if (this.server.hooks.getRequestBody !== undefined) {
+                this.$requestBody = this.server.hooks.getRequestBody.reduce(
+                    (body, func) => func(body),
+                    this.requestText
+                );
+            }
+            else {
+                this.$requestBody = this.requestText;
+            }
         }
         return this.$requestBody;
     }

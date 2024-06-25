@@ -7,7 +7,7 @@ function end(session) {
     }
 }
 
-function parseRequest(body) {
+function getRequestBody(body) {
     try {
         return body ? JSON.parse(body) : null;
     }
@@ -61,5 +61,5 @@ function validate(session, template) {
         validateObject(session.requestBody, template, "JSON");
 };
 
-exports.hooks = { end, parseRequest };
+exports.hooks = { end, getRequestBody };
 exports.validate = validate;
