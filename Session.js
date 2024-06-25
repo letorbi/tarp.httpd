@@ -111,52 +111,6 @@ exports.prototype.execHooks = async function(name) {
     }
 }
 
-exports.prototype.validateJson = function(template) {
-  function validateObject(obj, tmp, chain) {
-    if (typeof obj !== "object") {
-      throw new HttpError(400, `Key is not an object: ${chain}`);
-    }
-    var tmpKeys = Object.keys(tmp);
-    for (let key of tmpKeys) {
-      if (!Object.hasOwn(obj, key)) {
-        throw new HttpError(400, `Key is missing: ${chain}.${key}`);
-      }
-      if (typeof tmp[key] === "object") {
-        if (Array.isArray(tmp[key]))
-          validateArray(obj[key], tmp[key], `${chain}.${key}`);
-        else
-          validateObject(obj[key], tmp[key], `${chain}.${key}`);
-      }
-      else if (typeof obj[key] != tmp[key]) {
-        throw new HttpError(400, `Key is not of type ${tmp[key]}: ${chain}.${key}`);
-      }
-    }
-  }
-
-  function validateArray(arr, tmp, chain) {
-    if (!Array.isArray(arr)) {
-      throw new HttpError(400, `Key is not an array: ${chain}`);
-    }
-    for (let idx = 0; idx < arr.length; idx++) {
-      if (typeof tmp[0] === "object") {
-        if (Array.isArray(tmp[0]))
-          validateArray(arr[idx], tmp[0], `${chain}.${idx}`);
-        else
-          validateObject(arr[idx], tmp[0], `${chain}.${idx}`);
-      }
-      else if (typeof arr[idx] != tmp[0]) {
-        throw new HttpError(400, `Key is not of type ${tmp[0]}: ${chain}.${idx}`);
-      }
-    }
-  }
-
-  if (Array.isArray(template)) {
-    validateArray(this.requestBody, template, "JSON");
-  } else {
-    validateObject(this.requestBody, template, "JSON");
-  }
-};
-
 Object.defineProperty(exports.prototype, "requestBody", {
     get: function() {
         if (this.$requestBody === undefined) {
