@@ -1,5 +1,8 @@
-exports.end = function(code, body, type) {
-    return [code, JSON.stringify(body), "application/json;charset=UTF-8"];
+exports.end = function(session) {
+    if (typeof session.responseBody === "object") {
+        session.responseBody = JSON.stringify(session.responseBody);
+        session.responseType = "application/json;charset=UTF-8";
+    }
 }
 
 exports.parseRequest = function(body) {

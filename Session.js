@@ -8,13 +8,16 @@ var HttpError = require("./HttpError");
 
 module.exports = exports = function(server, request, response) {
     events.EventEmitter.call(this);
-    this.$requestJson = undefined;
-    this.$type = undefined;
+    this.$requestBody = undefined;
+    this.$requestType = undefined;
     this.server = server;
     this.request = request;
-    this.response = response;
     this.requestText = '';
-    this.url = new URL(request.url, "http://" + request.headers.host);
+    this.requestUrl = new URL(request.url, "http://" + request.headers.host);
+    this.response = response;
+    this.responseBody = undefined;
+    this.responseCode = undefined;
+    this.responseType = undefined;
 }
 
 exports.prototype = Object.create(events.EventEmitter.prototype);
@@ -35,12 +38,12 @@ exports.prototype.run = function() {
 }
 
 exports.prototype.start = async function() {
-  // empty function that can be overwritten to execute code before any hook
+    await this.execPlugins("start");
 }
 
 exports.prototype.delegate = function() {
     var hook;
-    hook = this.server.hooks[this.url.pathname] ? this.url.pathname : "*";
+    hook = this.server.hooks[this.requestUrl.pathname] ? this.requestUrl.pathname : "*";
     this.start().then(
       () => {
         if (!this.server.hooks[hook])
@@ -51,12 +54,13 @@ exports.prototype.delegate = function() {
       }
     ).then(
       (body) => {
+        this.responseBody = body;
         // TODO Mime-type detection should be part of a hook wrapper
         if (body && body.constructor === Buffer) {
-            let ext = path.extname(this.url.pathname.replace(/\/$/, "/index.html")).substr(1);
-            return this.end(200, body,  mime[ext] || "application/octet-stream");
+            let ext = path.extname(this.requestUrl.pathname.replace(/\/$/, "/index.html")).substr(1);
+            this.responseType = mime[ext];
         }
-        return this.end(200, body, "application/octet-stream");
+        return this.end();
       }
     ).catch(
       (error) => {
@@ -64,7 +68,9 @@ exports.prototype.delegate = function() {
           console.warn("ABORT "+error.toString());
           if (error.exception)
               console.log(error.exception);
-          return this.end(error.code, error.message);
+          this.responseCode = error.code;
+          this.responseBody = error.message;
+          return this.end();
         }
         else {
           throw error;
@@ -72,36 +78,37 @@ exports.prototype.delegate = function() {
       }
     ).catch(
       (error) => {
-        console.error("ERROR " + this.request.method.toLowerCase() + " " + this.url.pathname + " failed with:");
+        console.error("ERROR " + this.request.method.toLowerCase() + " " + this.requestUrl.pathname + " failed with:");
         console.error(error);
-        return this.end(500, "Internal server error");
+        this.responseCode = 500;
+        this.responseType = "text/plain"
+        this.responseBody = "Internal server error";
+        return this.end();
       }
     ).catch(
       (error) => {
-        console.error("PANIC " + this.request.method.toLowerCase() + " " + this.url.pathname + " failed with:");
+        console.error("PANIC " + this.request.method.toLowerCase() + " " + this.requestUrl.pathname + " failed with:");
         console.error(error);
         process.exit(1)
       }
     );
 }
 
-exports.prototype.end = async function(code, body, type) {
-    [code, body, type] = await this.execPlugins("end", [code, body, type]);
-    this.response.statusCode = code;
-    if (type)
-        this.response.setHeader("Content-Type", type);
-    if (body)
-        this.response.write(body, "utf8");
+exports.prototype.end = async function() {
+    await this.execPlugins("end");
+    this.response.statusCode = this.responseCode || 200;
+    this.response.setHeader("Content-Type", this.responseType || "application/octet-stream");
+    if (this.responseBody)
+        this.response.write(this.responseBody, "utf8");
     this.response.end();
 }
 
-exports.prototype.execPlugins = async function(name, data) {
+exports.prototype.execPlugins = async function(name) {
     if (this.server.plugins[name]) {
         for (const func of this.server.plugins[name]) {
-            data = await func(...data)
+            await func(this)
         }
     }
-    return data
 }
 
 exports.prototype.validateJson = function(template) {
@@ -144,40 +151,40 @@ exports.prototype.validateJson = function(template) {
   }
 
   if (Array.isArray(template)) {
-    validateArray(this.requestJson, template, "JSON");
+    validateArray(this.requestBody, template, "JSON");
   } else {
-    validateObject(this.requestJson, template, "JSON");
+    validateObject(this.requestBody, template, "JSON");
   }
 };
 
-Object.defineProperty(exports.prototype, "requestJson", {
+Object.defineProperty(exports.prototype, "requestBody", {
     get: function() {
-        if (this.$requestJson === undefined) {
-            this.$requestJson = this.server.plugins.parseRequest.reduce(
+        if (this.$requestBody === undefined) {
+            this.$requestBody = this.server.plugins.parseRequest.reduce(
                 (body, func) => func(body),
                 this.requestText
             )
         }
-        return this.$requestJson;
+        return this.$requestBody;
     }
 });
 
-Object.defineProperty(exports.prototype, "type", {
+Object.defineProperty(exports.prototype, "requestType", {
     get: function() {
-        if (this.$type === undefined) {
-            this.$type = null;
+        if (this.$requestType === undefined) {
+            this.$requestType = null;
             if (this.request.headers['content-type']) {
-                this.$type = {
+                this.$requestType = {
                     'name': null,
                     'options': {}
                 };
-                this.$type.name = this.request.headers['content-type'].replace(/;\s*([^;=]*)\s*=\s*([^;]*)\s*/g, function(m, p1, p2) {
+                this.$requestType.name = this.request.headers['content-type'].replace(/;\s*([^;=]*)\s*=\s*([^;]*)\s*/g, function(m, p1, p2) {
                     if (p1.length)
-                        this.$type.options[p1] = p2;
+                        this.$requestType.options[p1] = p2;
                     return "";
                 }.bind(this));
             }
         }
-        return this.$type;
+        return this.$requestType;
     }
 });
