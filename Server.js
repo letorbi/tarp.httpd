@@ -7,7 +7,7 @@ var os = require("os");
 module.exports = exports = function(config, Session) {
     this.Session = Session || require('./Session');
     this.config = config;
-    this.hooks = {};
+    this.routes = {};
     this.plugins = {};
     this.httpd = null;
 
@@ -15,8 +15,8 @@ module.exports = exports = function(config, Session) {
         this.config.workers = os.cpus().length;
 }
 
-exports.prototype.addHookHandler = function(hook, handler) {
-    this.hooks[hook] = handler;
+exports.prototype.addRoute = function(route, handler) {
+    this.routes[route] = handler;
 }
 
 exports.prototype.addPlugin = function(plugin) {

@@ -42,20 +42,20 @@ exports.prototype.start = async function() {
 }
 
 exports.prototype.delegate = function() {
-    var hook;
-    hook = this.server.hooks[this.requestUrl.pathname] ? this.requestUrl.pathname : "*";
+    var route;
+    route = this.server.routes[this.requestUrl.pathname] ? this.requestUrl.pathname : "*";
     this.start().then(
       () => {
-        if (!this.server.hooks[hook])
-            throw new HttpError(404, "hook not found");
-        if (typeof this.server.hooks[hook][this.request.method] !== "function")
+        if (!this.server.routes[route])
+            throw new HttpError(404, "route not found");
+        if (typeof this.server.routes[route][this.request.method] !== "function")
             throw new HttpError(501, "missing method");
-        return this.server.hooks[hook][this.request.method](this);
+        return this.server.routes[route][this.request.method](this);
       }
     ).then(
       (body) => {
         this.responseBody = body;
-        // TODO Mime-type detection should be part of a hook wrapper
+        // TODO Mime-type detection should be part of a route wrapper
         if (body && body.constructor === Buffer) {
             let ext = path.extname(this.requestUrl.pathname.replace(/\/$/, "/index.html")).substr(1);
             this.responseType = mime[ext];
