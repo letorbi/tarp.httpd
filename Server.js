@@ -70,5 +70,5 @@ exports.prototype.listen = function(request, response) {
     response.setHeader("Cache-Control", "no-cache");
     response.setHeader("Expires", "-1");
     var session = new this.Session(this, request, response);
-    session.run();
+    session.connect();
 }

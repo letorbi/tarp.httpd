@@ -18,21 +18,19 @@ module.exports = exports = function(server, request, response) {
     this.responseBody = undefined;
     this.responseCode = undefined;
     this.responseType = undefined;
+    this.waitForRequestData = true;
 }
 
 exports.prototype = Object.create(events.EventEmitter.prototype);
 
-exports.prototype.run = function() {
-    this.request.addListener("data", receive.bind(this));
-    this.request.addListener("end", delegate.bind(this));
+exports.prototype.connect = async function() {
+    await this.execHooks("connect");
 
-    function receive(chunk) {
-        this.requestText += chunk;
+    if (this.waitForRequestData) {
+        this.request.addListener("data", (chunk) => this.requestText += chunk);
+        this.request.addListener("end", () => this.delegate());
     }
-
-    function delegate(error) {
-        if (error)
-            return this.abort(error);
+    else {
         this.delegate();
     }
 }
