@@ -35,12 +35,12 @@ exports.prototype.loadPlugin = function(plugin) {
 
 exports.prototype.run = function() {
     if (cluster.isMaster)
-        this.setup();
+        this.fork();
     else
-        this.connect();
+        this.setup();
 }
 
-exports.prototype.setup = function() {
+exports.prototype.fork = function() {
     if (process.getuid() == 0)
         console.warn("MASTER "+process.pid+" process runs with root privileges!")
     console.info("MASTER "+process.pid+" starting workers");
@@ -52,7 +52,7 @@ exports.prototype.setup = function() {
     });
 }
 
-exports.prototype.connect = function() {
+exports.prototype.setup = function() {
     console.info("WORKER "+process.pid+" starting http server");
     this.httpd = http.createServer();
     this.httpd.listen(this.config.port, this.config.host);
@@ -70,5 +70,5 @@ exports.prototype.listen = function(request, response) {
     response.setHeader("Cache-Control", "no-cache");
     response.setHeader("Expires", "-1");
     var session = new this.Session(this, request, response);
-    session.connect();
+    session.run();
 }
