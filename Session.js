@@ -55,6 +55,9 @@ exports.prototype.run = async function() {
             }
             await this.end();
         }
+        finally {
+            await this.execHooks("disconnect");
+        }
     }
     catch (panic) {
         this.log("error", "panic with:\n", panic);
