@@ -4,6 +4,8 @@ var cluster = require("cluster");
 var http = require("http");
 var os = require("os");
 
+const loglevel = { log:0, info:1, warn:2, error:3 };
+
 module.exports = exports = function(config, Session) {
     this.Session = Session || require('./Session');
     this.config = config;
@@ -65,9 +67,19 @@ exports.prototype.setup = function() {
 }
 
 exports.prototype.listen = function(request, response) {
+    this.log("log", "server listen");
     response.setHeader("Pragma", "no-cache");
     response.setHeader("Cache-Control", "no-cache");
     response.setHeader("Expires", "-1");
     var session = new this.Session(this, request, response);
     session.run();
+}
+
+exports.prototype.log = function(lvl, msg, ...args) {
+    if (loglevel[lvl] >= loglevel[this.config.loglevel])
+        console[lvl](`${lvl} ${new Date().toISOString()} ${msg}`, ...args);
+    else if (loglevel[lvl] === undefined)
+        console.log(`invalid loglevel: ${lvl}`);
+    else if (loglevel[this.config.loglevel] === undefined)
+        console.log(`invalid loglevel in config: ${this.config.loglevel}`);
 }

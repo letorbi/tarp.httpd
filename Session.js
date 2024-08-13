@@ -42,16 +42,13 @@ exports.prototype.run = async function() {
         }
         catch (error) {
             if (error instanceof HttpError) {
-                console.warn("ABORT "+error.toString());
-                if (error.exception)
-                    console.log(error.exception);
+                this.log("warn", `HTTP error ${error}`, error.exception);
                 this.responseCode = error.code;
                 this.responseType = "text/plain"
                 this.responseBody = error.message;
             }
             else {
-                console.error("ERROR " + this.request.method.toLowerCase() + " " + this.requestUrl.pathname + " failed with:");
-                console.error(error);
+                this.log("error", "failed with:\n", error);
                 this.responseCode = 500;
                 this.responseType = "text/plain"
                 this.responseBody = "Internal server error";
@@ -60,13 +57,13 @@ exports.prototype.run = async function() {
         }
     }
     catch (panic) {
-        console.error("PANIC " + this.request.method.toLowerCase() + " " + this.requestUrl.pathname + " failed with:");
-        console.error(panic);
+        this.log("error", "panic with:\n", panic);
         process.exit(1)
     }
 }
 
 exports.prototype.connect = function() {
+    this.log("log", "connect");
     return new Promise((resolve, reject) => {
         if (this.waitForRequestData) {
             this.request.addListener("data", (chunk) => this.requestText += chunk);
@@ -79,6 +76,7 @@ exports.prototype.connect = function() {
 }
 
 exports.prototype.start = async function() {
+    this.log("log", "start");
     const route = this.server.routes[this.requestUrl.pathname] ? this.requestUrl.pathname : "*";
     if (!this.server.routes[route])
         throw new HttpError(404, "route not found");
@@ -89,6 +87,7 @@ exports.prototype.start = async function() {
 
 
 exports.prototype.end = async function() {
+    this.log("log", "end");
     this.response.statusCode = this.responseCode || 200;
     this.response.setHeader("Content-Type", this.responseType || "application/octet-stream");
     if (this.responseBody)
@@ -102,6 +101,10 @@ exports.prototype.execHooks = async function(name) {
             await func(this)
         }
     }
+}
+
+exports.prototype.log = function(lvl, msg, ...args) {
+    this.server.log(lvl, `${this.request.method} ${this.requestUrl.pathname} ${msg}`, ...args);
 }
 
 Object.defineProperty(exports.prototype, "requestBody", {
