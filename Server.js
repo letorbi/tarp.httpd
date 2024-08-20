@@ -43,18 +43,17 @@ exports.prototype.run = function() {
 
 exports.prototype.fork = function() {
     if (process.getuid() == 0)
-        console.warn("MASTER "+process.pid+" process runs with root privileges!")
-    console.info("MASTER "+process.pid+" starting workers");
+        this.log("warn", "master runs with root privileges")
+    this.log("info", "master is forking workers...");
     for (var i = 0; i < this.config.workers; i++)
         cluster.fork();
     cluster.on('exit', (worker, code, signal) => {
-        console.info('WORKER ' + worker.process.pid + ' died');
+        this.log("warn", "worker died");
         cluster.fork();
     });
 }
 
 exports.prototype.setup = function() {
-    console.info("WORKER "+process.pid+" starting http server");
     this.httpd = http.createServer();
     this.httpd.listen(this.config.port, this.config.host);
     this.httpd.addListener("listening", onListening.bind(this));
@@ -62,12 +61,11 @@ exports.prototype.setup = function() {
 
     function onListening() {
         var addr = this.httpd.address();
-        console.info("WORKER "+process.pid+" listening at "+addr.address+":"+addr.port);
+        this.log("info", `worker is listening at ${addr.address} port ${addr.port}`);
     }
 }
 
 exports.prototype.listen = function(request, response) {
-    this.log("log", "server listen");
     response.setHeader("Pragma", "no-cache");
     response.setHeader("Cache-Control", "no-cache");
     response.setHeader("Expires", "-1");
@@ -77,7 +75,7 @@ exports.prototype.listen = function(request, response) {
 
 exports.prototype.log = function(lvl, msg, ...args) {
     if (loglevel[lvl] >= loglevel[this.config.loglevel])
-        console[lvl](`${lvl} ${new Date().toISOString()} ${msg}`, ...args);
+        console[lvl](`${lvl.toUpperCase()} ${new Date().toISOString()} ${process.pid} ${msg}`, ...args);
     else if (loglevel[lvl] === undefined)
         console.log(`invalid loglevel: ${lvl}`);
     else if (loglevel[this.config.loglevel] === undefined)

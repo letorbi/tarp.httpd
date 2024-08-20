@@ -42,16 +42,19 @@ exports.prototype.run = async function() {
         }
         catch (error) {
             if (error instanceof HttpError) {
-                this.log("warn", `HTTP error ${error}`, error.exception);
+                if (error.data !== undefined)
+                    this.log("info", `${error}:\n`, error.data);
+                else
+                    this.log("info", `${error}`);
                 this.responseCode = error.code;
                 this.responseType = "text/plain"
                 this.responseBody = error.message;
             }
             else {
-                this.log("error", "failed with:\n", error);
+                this.log("warn", "internal server error:\n", error);
                 this.responseCode = 500;
                 this.responseType = "text/plain"
-                this.responseBody = "Internal server error";
+                this.responseBody = "internal server error";
             }
             await this.end();
         }
@@ -60,13 +63,12 @@ exports.prototype.run = async function() {
         }
     }
     catch (panic) {
-        this.log("error", "panic with:\n", panic);
+        this.log("error", "server panic:\n", panic);
         process.exit(1)
     }
 }
 
 exports.prototype.connect = function() {
-    this.log("log", "connect");
     return new Promise((resolve, reject) => {
         if (this.waitForRequestData) {
             this.request.addListener("data", (chunk) => this.requestText += chunk);
@@ -79,7 +81,6 @@ exports.prototype.connect = function() {
 }
 
 exports.prototype.start = async function() {
-    this.log("log", "start");
     const route = this.server.routes[this.requestUrl.pathname] ? this.requestUrl.pathname : "*";
     if (!this.server.routes[route])
         throw new HttpError(404, "route not found");
@@ -90,7 +91,6 @@ exports.prototype.start = async function() {
 
 
 exports.prototype.end = async function() {
-    this.log("log", "end");
     this.response.statusCode = this.responseCode || 200;
     this.response.setHeader("Content-Type", this.responseType || "application/octet-stream");
     if (this.responseBody)
