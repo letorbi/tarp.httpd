@@ -55,13 +55,15 @@ exports.prototype.fork = function() {
 
 exports.prototype.setup = function() {
     this.httpd = http.createServer();
-    this.httpd.listen(this.config.port, this.config.host);
+    if (typeof this.config.socket === "string")
+        this.httpd.listen(this.config.socket);
+    else
+        this.httpd.listen(this.config.port, this.config.host);
     this.httpd.addListener("listening", onListening.bind(this));
     this.httpd.addListener("request", this.listen.bind(this));
 
     function onListening() {
-        var addr = this.httpd.address();
-        this.log("info", `worker is listening at ${addr.address} port ${addr.port}`);
+        this.log("info", `worker is listening at ${JSON.stringify(this.httpd.address())}`);
     }
 }
 
