@@ -1,8 +1,10 @@
 "use strict";
 
 var cluster = require("cluster");
+var fs = require("fs");
 var http = require("http");
 var os = require("os");
+var util = require("util");
 
 const loglevel = { log:0, info:1, warn:2, error:3 };
 
@@ -44,13 +46,32 @@ exports.prototype.run = function() {
 exports.prototype.fork = function() {
     if (process.getuid() == 0)
         this.log("warn", "master runs with root privileges")
+    process.once('SIGINT', onTerminate.bind(this));
+    process.once('SIGTERM', onTerminate.bind(this));
     this.log("info", "master is forking workers...");
     for (var i = 0; i < this.config.workers; i++)
         cluster.fork();
     cluster.on('exit', (worker, code, signal) => {
-        this.log("warn", "worker died");
+        if (code !== null)
+            this.log("warn", `worker ${worker.process.pid} exited with code ${code}`);
+        else if (signal !== null)
+            this.log("warn", `worker ${worker.process.pid} exited after signal ${signal}`);
+        else
+            this.log("warn", `worker ${worker.process.pid} exited`);
         cluster.fork();
     });
+
+    async function onTerminate() {
+        try {
+            if (typeof this.config.socket === "string")
+                await util.promisify(fs.unlink)(this.config.socket);
+            process.exit(0);
+        }
+        catch (e) {
+            this.log("warn", "error during process termination:\n", e);
+            process.exit(10);
+        }
+    }
 }
 
 exports.prototype.setup = function() {
