@@ -68,8 +68,8 @@ exports.prototype.fork = function() {
             process.exit(0);
         }
         catch (e) {
-            this.log("warn", "error during process termination:\n", e);
-            process.exit(10);
+            this.log("error", "error during process termination:\n", e);
+            process.exit(1);
         }
     }
 }
@@ -80,20 +80,18 @@ exports.prototype.setup = function() {
         this.httpd.listen(this.config.socket);
     else
         this.httpd.listen(this.config.port, this.config.host);
-    this.httpd.addListener("listening", onListening.bind(this));
-    this.httpd.addListener("request", this.listen.bind(this));
 
-    function onListening() {
-        this.log("info", `worker is listening at ${JSON.stringify(this.httpd.address())}`);
-    }
-}
+    this.httpd.addListener("listening", () => {
+        this.log("info", `worker listening at ${JSON.stringify(this.httpd.address())}`);
+    });
 
-exports.prototype.listen = function(request, response) {
-    response.setHeader("Pragma", "no-cache");
-    response.setHeader("Cache-Control", "no-cache");
-    response.setHeader("Expires", "-1");
-    var session = new this.Session(this, request, response);
-    session.run();
+    this.httpd.addListener("request", (request, response) => {
+        response.setHeader("Pragma", "no-cache");
+        response.setHeader("Cache-Control", "no-cache");
+        response.setHeader("Expires", "-1");
+        var session = new this.Session(this, request, response);
+        session.run();
+    });
 }
 
 exports.prototype.log = function(lvl, msg, ...args) {
