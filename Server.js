@@ -85,6 +85,11 @@ exports.prototype.setup = function() {
         this.log("info", `worker listening at ${JSON.stringify(this.httpd.address())}`);
     });
 
+    this.httpd.addListener("error", (error) => {
+        this.log("info", "HTTP server error:\n", error);
+        process.exit(1);
+    })
+
     this.httpd.addListener("request", (request, response) => {
         response.setHeader("Pragma", "no-cache");
         response.setHeader("Cache-Control", "no-cache");
