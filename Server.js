@@ -38,43 +38,49 @@ exports.prototype.loadPlugin = function(plugin) {
 
 exports.prototype.run = function() {
     if (cluster.isMaster)
-        this.fork();
+        this.runMaster();
     else
-        this.setup();
+        this.runWorker();
 }
 
-exports.prototype.fork = function() {
+exports.prototype.runMaster = function() {
+    var isShuttingDown = false;
+
     if (process.getuid() == 0)
         this.log("warn", "master runs with root privileges")
     process.once('SIGINT', onTerminate.bind(this));
     process.once('SIGTERM', onTerminate.bind(this));
+
     this.log("info", "master is forking workers...");
     for (var i = 0; i < this.config.workers; i++)
         cluster.fork();
+
     cluster.on('exit', (worker, code, signal) => {
-        if (code !== null)
-            this.log("warn", `worker ${worker.process.pid} exited with code ${code}`);
-        else if (signal !== null)
-            this.log("warn", `worker ${worker.process.pid} exited after signal ${signal}`);
-        else
-            this.log("warn", `worker ${worker.process.pid} exited`);
-        cluster.fork();
+        if (code > 0) {
+            this.log("warn", `worker ${worker.process.pid} exited with code ${code}, respawning...`);
+            !isShuttingDown && cluster.fork(); // do not fork during shutdown
+        }
+        else {
+            this.log("info", `worker ${worker.process.pid} exited (${signal})`);
+        }
     });
 
-    async function onTerminate() {
-        try {
-            if (typeof this.config.socket === "string")
-                await util.promisify(fs.unlink)(this.config.socket);
-            process.exit(0);
-        }
-        catch (e) {
-            this.log("error", "error during process termination:\n", e);
-            process.exit(1);
-        }
+    function onTerminate() {
+        this.log("info", "sending shutdown signal to workers...");
+        isShuttingDown = true;
+        for (const id in cluster.workers)
+          cluster.workers[id].send("shutdown");
     }
 }
 
-exports.prototype.setup = function() {
+exports.prototype.runWorker = function() {
+    process.on('message', (msg) => {
+        if (msg === "shutdown")
+            process.exit(0); // this also closes the server properly
+        else
+            this.log("warn", `invalid IPC message "${msg}"`);
+    });
+
     this.httpd = http.createServer();
     if (typeof this.config.socket === "string")
         this.httpd.listen(this.config.socket);
@@ -82,7 +88,7 @@ exports.prototype.setup = function() {
         this.httpd.listen(this.config.port, this.config.host);
 
     this.httpd.addListener("listening", () => {
-        this.log("info", `worker listening at ${JSON.stringify(this.httpd.address())}`);
+        this.log("info", `server listening at ${JSON.stringify(this.httpd.address())}`);
     });
 
     this.httpd.addListener("error", (error) => {
