@@ -1,6 +1,6 @@
 {
   "name": "@tarp/httpd",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "A lightweight & simple HTTP daemon.",
   "author": "Torben Haase (https://pixelsvsbytes.com)",
   "license": "LGPL-3.0",
@@ -18,10 +18,6 @@
     "webserver"
   ],
   "main": "Server.js",
-  "directories": {},
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
   "dependencies": {
     "mime.json": "git+https://github.com/micnic/mime.json.git"
   },
