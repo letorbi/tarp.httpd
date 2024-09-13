@@ -2,13 +2,11 @@
   "name": "@tarp/httpd",
   "version": "0.0.1",
   "description": "A lightweight & simple HTTP daemon.",
-  "main": "Server.js",
-  "dependencies": {
-      "mime.json": "git+https://github.com/micnic/mime.json.git"
-  },
-  "directories": {},
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "author": "Torben Haase (https://pixelsvsbytes.com)",
+  "license": "LGPL-3.0",
+  "homepage": "https://github.com/letorbi/tarp.httpd",
+  "bugs": {
+    "url": "https://github.com/letorbi/tarp.httpd/issues"
   },
   "repository": {
     "type": "git",
@@ -19,10 +17,15 @@
     "daemon",
     "webserver"
   ],
-  "author": "Torben Haase (https://pixelsvsbytes.com)",
-  "license": "LGPL-3.0",
-  "bugs": {
-    "url": "https://github.com/letorbi/tarp.httpd/issues"
+  "main": "Server.js",
+  "directories": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "homepage": "https://github.com/letorbi/tarp.httpd#readme"
+  "dependencies": {
+    "mime.json": "git+https://github.com/micnic/mime.json.git"
+  },
+  "optionalDependencies": {
+    "pg": "^8.12.0"
+  }
 }
